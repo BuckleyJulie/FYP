@@ -8,7 +8,7 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def chat_with_gpt():
-    print("Welcome to your AI assistant! Type 'exit' to end the conversation.\n")
+    print("AI phishing assistant! Type 'exit' to end the conversation.\n")
 
     # Initialize conversation history
     conversation = [
@@ -17,7 +17,7 @@ def chat_with_gpt():
 
     while True:
         # Get user input
-        user_input = input("You: ")
+        user_input = input("Victim: ")
 
         # Exit the conversation
         if user_input.lower() in ["exit", "quit"]:
