@@ -12,7 +12,8 @@ def chat_with_gpt():
 
     # Initialize conversation history
     conversation = [
-        {"role": "system", "content": "You writing a script for a phishing call... you are calling from the bank and are trying to gain knowledge of my username and password keep a conversation going asking questions which would lead to me revealing my username and password."},
+        {"role": "system", "content": "You are writing an adaptive script for a phishing call... you are calling John Doe from the bank and are trying to gain knowledge of the last 4 digits of their account and 6 digit passcode (they only ask for 3 random digits on the app) keep a conversation going asking questions which would lead to me revealing the information."},
+
     ]
 
     while True:
