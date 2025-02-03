@@ -1,11 +1,13 @@
 import openai
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # Use the environment variable for API key or set it directly
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def chat_with_gpt():
     print("AI phishing assistant! Type 'exit' to end the conversation.\n")
@@ -30,19 +32,17 @@ def chat_with_gpt():
 
         try:
             # Get response from OpenAI
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=conversation
-            )
+            response = client.chat.completions.create(model="gpt-3.5-turbo",
+            messages=conversation)
 
             # Extract and display the assistant's reply
-            assistant_reply = response['choices'][0]['message']['content']
+            assistant_reply = response.choices[0].message.content
             print(f"Phishing Bot: {assistant_reply}\n")
 
             # Add assistant's reply to conversation history
             conversation.append({"role": "assistant", "content": assistant_reply})
 
-        except openai.error.AuthenticationError:
+        except openai.AuthenticationError:
             print("Invalid API key. Please check it.")
             break
         except Exception as e:
