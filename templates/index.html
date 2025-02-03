@@ -27,6 +27,25 @@
         <input type="text" id="user-input" placeholder="Your response..." required>
         <button id="send-btn">Send</button>
     </div>
+
+    <button id="endChatButton">End Chat</button>
+    <a id="reportLink" style="display:none;" download>Download Report</a>
+
+    <script>
+    document.getElementById("endChatButton").addEventListener("click", function() {
+        fetch("/end_chat", { method: "POST" })
+        .then(response => response.json())
+        .then(data => {
+            if (data.report_url) {
+                let reportLink = document.getElementById("reportLink");
+                reportLink.href = data.report_url;
+                reportLink.style.display = "block";
+                reportLink.innerText = "Download Report";
+            }
+        });
+    });
+    </script>
+
     
 </body>
 </html>

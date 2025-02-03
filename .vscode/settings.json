@@ -1,6 +1,7 @@
 {
     "cSpell.words": [
-        "dotenv"
+        "dotenv",
+        "jsonify"
     ],
     "CodeGPT.apiKey": "CodeGPT Plus Beta"
 }
