@@ -28,3 +28,20 @@ body {
 input, button {
     margin-top: 10px;
 }
+
+#dashboard-btn {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: center;
+}
+
+#dashboard-btn:hover {
+    background-color: #0056b3;
+}

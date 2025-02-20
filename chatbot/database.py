@@ -16,6 +16,14 @@ def init_db():
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS interactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        employee_name TEXT NOT NULL,
+        script_choice TEXT NOT NULL,
+        interaction_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
     conn.commit()
     conn.close()
 
@@ -40,3 +48,23 @@ def get_user_data(employee_name):
     data = cursor.fetchall()
     conn.close()
     return data
+
+def get_summary_data():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT COUNT(DISTINCT employee_name) FROM interactions")
+    total_employees = cursor.fetchone()[0]
+    
+    cursor.execute('''
+    SELECT script_choice, COUNT(*) 
+    FROM interactions 
+    GROUP BY script_choice
+    ''')
+    training_needs = dict(cursor.fetchall())
+    
+    conn.close()
+    return {
+        'total_employees': total_employees,
+        'training_needs': training_needs
+    }
