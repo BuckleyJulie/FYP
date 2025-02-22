@@ -16,7 +16,6 @@ def init_db():
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-<<<<<<< HEAD
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS interactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,8 +24,6 @@ def init_db():
         interaction_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     ''')
-=======
->>>>>>> d269442 (restart)
     conn.commit()
     conn.close()
 
@@ -53,7 +50,6 @@ def get_user_data(employee_name):
     return data
 
 def get_summary_data():
-<<<<<<< HEAD
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
@@ -72,29 +68,3 @@ def get_summary_data():
         'total_employees': total_employees,
         'training_needs': training_needs
     }
-=======
-    conn = sqlite3.connect("phishing.db")
-    cursor = conn.cursor()
-    
-    # Get total employees tested
-    cursor.execute("SELECT COUNT(DISTINCT employee_name) FROM interactions")
-    total_employees = cursor.fetchone()[0]
-    
-    # Get training needs statistics
-    cursor.execute("SELECT user_response FROM interactions")
-    responses = cursor.fetchall()
-    
-    training_needs = {"Phishing Awareness": 0, "Data Sharing Risks": 0, "Email Verification": 0}
-    
-    for (response,) in responses:
-        if "clicked" in response.lower() or "entered" in response.lower():
-            training_needs["Phishing Awareness"] += 1
-        if "shared" in response.lower() or "provided" in response.lower():
-            training_needs["Data Sharing Risks"] += 1
-        if "trusted" in response.lower() or "assumed" in response.lower():
-            training_needs["Email Verification"] += 1
-    
-    conn.close()
-    
-    return {"total_employees": total_employees, "training_needs": training_needs}
->>>>>>> d269442 (restart)

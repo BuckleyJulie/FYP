@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, session, jsonify, send_file, 
 from chatbot.gpt import get_script_response
 from chatbot.scripts import get_script
 from chatbot.database import init_db, log_interaction, get_user_data
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4, letter
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, PageBreak
@@ -81,7 +81,7 @@ def generate_pdf_report(employee_name):
     if not user_data:
         return jsonify({"error": "No data found for this employee."}), 404
 
-    doc = SimpleDocTemplate(pdf_path, pagesize=letter)
+    doc = SimpleDocTemplate(pdf_path, pagesize=A4)
     styles = getSampleStyleSheet()
     normal_style = ParagraphStyle(
         "Normal",
