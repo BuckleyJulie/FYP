@@ -1,7 +1,10 @@
-from flask import Flask, render_template, request, session, jsonify, send_file # type: ignore
+from flask import Flask, render_template, request, session, jsonify, send_file
 from chatbot.gpt import get_script_response
 from chatbot.scripts import get_script
-from chatbot.database import init_db, log_interaction, get_user_data, get_summary_data
+from chatbot.database import init_db, log_interaction, get_user_data
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import os
 
 app = Flask(__name__)
 app.secret_key = "super secret key"
@@ -59,8 +62,8 @@ def end_chat():
         return jsonify({"error": "No active session."}), 400
 
     employee_name = session["employee_name"]
-    report_url = f"/report/{employee_name}"
-    
+    report_url = f"/report/{employee_name}.pdf"
+
     # Clear the session
     session.pop("conversation", None)
     session.pop("script_initialized", None)
@@ -69,61 +72,40 @@ def end_chat():
 
     return jsonify({"message": "Chat ended. Report generated.", "report_url": report_url})
 
-@app.route("/report/<employee_name>", methods=["GET"])
-def generate_report(employee_name):
+@app.route("/report/<employee_name>.pdf", methods=["GET"])
+def generate_pdf_report(employee_name):
     user_data = get_user_data(employee_name)
-    report_path = f"reports/{employee_name}_report.txt"
+    pdf_path = f"reports/{employee_name}_report.pdf"
 
     if not user_data:
         return jsonify({"error": "No data found for this employee."}), 404
 
-    with open(report_path, "w") as report:
-        report.write(f"Security Awareness Training Report for {employee_name}\n")
-        report.write("=" * 50 + "\n\n")
-        
-        training_needs = set()
-        sensitive_data = {
-            "email": False,
-            "password": False,
-            "security_answer": False,
-            "auth_code": False
-        }
-        
-        for entry in user_data:
-            _, _, script, user_resp, ai_resp, timestamp = entry
-            report.write(f"Timestamp: {timestamp}\n")
-            report.write(f"Script Type: {script}\n")
-            report.write(f"User Response: {user_resp}\n")
-            report.write(f"AI Feedback: {ai_resp}\n")
-            report.write("-" * 50 + "\n")
-            
-            # Identify sensitive disclosures
-            if "@" in user_resp:
-                sensitive_data["email"] = True
-                training_needs.add("Avoid Sharing Email Information with Unknown Sources")
-            if "password" in user_resp.lower():
-                sensitive_data["password"] = True
-                training_needs.add("Never Share Passwords Over the Phone")
-            if "maiden name" in ai_resp.lower() or "security question" in ai_resp.lower():
-                sensitive_data["security_answer"] = True
-                training_needs.add("Be Cautious When Answering Security Questions")
-            if user_resp.isdigit() and len(user_resp) == 6:
-                sensitive_data["auth_code"] = True
-                training_needs.add("Never Share Authentication Codes Over the Phone")
-            
-        report.write("Identified Security Risks:\n")
-        report.write("=" * 50 + "\n")
-        for key, value in sensitive_data.items():
-            if value:
-                report.write(f"- {key.replace('_', ' ').title()} was disclosed.\n")
-        
-        if training_needs:
-            report.write("\nRecommended Security Training Areas:\n")
-            report.write("=" * 50 + "\n")
-            for need in training_needs:
-                report.write(f"- {need}\n")
+    c = canvas.Canvas(pdf_path, pagesize=letter)
+    width, height = letter
+
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(50, height - 50, f"Security Awareness Training Report for {employee_name}")
+    c.line(50, height - 55, 550, height - 55)
     
-    return send_file(report_path, as_attachment=True)
+    y_position = height - 80
+    c.setFont("Helvetica", 10)
+
+    for entry in user_data:
+        _, _, script, user_resp, ai_resp, timestamp = entry
+        c.drawString(50, y_position, f"Timestamp: {timestamp}")
+        y_position -= 15
+        c.drawString(50, y_position, f"Script Type: {script}")
+        y_position -= 15
+        c.drawString(50, y_position, f"User Response: {user_resp}")
+        y_position -= 15
+        c.drawString(50, y_position, f"AI Feedback: {ai_resp}")
+        y_position -= 25
+        if y_position < 100:
+            c.showPage()
+            y_position = height - 50
+    
+    c.save()
+    return send_file(pdf_path, as_attachment=True)
 
 if __name__ == "__main__":
     app.run(debug=True)
