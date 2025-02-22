@@ -1,22 +1,12 @@
-<<<<<<< HEAD
-from flask import Flask, render_template, request, session, jsonify, send_file
-from chatbot.gpt import get_script_response
-from chatbot.scripts import get_script
-from chatbot.database import init_db, log_interaction, get_user_data
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-=======
 from flask import Flask, render_template, request, session, jsonify, send_file, url_for
 from chatbot.gpt import get_script_response
 from chatbot.scripts import get_script
 from chatbot.database import init_db, log_interaction, get_user_data
-from reportlab.lib.pagesizes import A4, letter
+from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-
->>>>>>> d269442 (restart)
 import os
 
 app = Flask(__name__)
@@ -26,13 +16,7 @@ init_db()  # Ensure database is initialized
 
 @app.route("/", methods=["GET"])
 def index():
-<<<<<<< HEAD
-    if "conversation" not in session:
-        session["conversation"] = []
-    return render_template("index.html", script=session["conversation"])
-=======
     return render_template("index.html")
->>>>>>> d269442 (restart)
 
 @app.route("/start", methods=["POST"])
 def start_conversation():
@@ -79,11 +63,7 @@ def end_chat():
         return jsonify({"error": "No active session."}), 400
 
     employee_name = session["employee_name"]
-<<<<<<< HEAD
-    report_url = f"/report/{employee_name}.pdf"
-=======
     report_url = url_for("generate_pdf_report", employee_name=employee_name, _external=True)
->>>>>>> d269442 (restart)
 
     # Clear the session
     session.pop("conversation", None)
@@ -101,35 +81,7 @@ def generate_pdf_report(employee_name):
     if not user_data:
         return jsonify({"error": "No data found for this employee."}), 404
 
-<<<<<<< HEAD
-    c = canvas.Canvas(pdf_path, pagesize=letter)
-    width, height = letter
-
-    c.setFont("Helvetica-Bold", 14)
-    c.drawString(50, height - 50, f"Security Awareness Training Report for {employee_name}")
-    c.line(50, height - 55, 550, height - 55)
-    
-    y_position = height - 80
-    c.setFont("Helvetica", 10)
-
-    for entry in user_data:
-        _, _, script, user_resp, ai_resp, timestamp = entry
-        c.drawString(50, y_position, f"Timestamp: {timestamp}")
-        y_position -= 15
-        c.drawString(50, y_position, f"Script Type: {script}")
-        y_position -= 15
-        c.drawString(50, y_position, f"User Response: {user_resp}")
-        y_position -= 15
-        c.drawString(50, y_position, f"AI Feedback: {ai_resp}")
-        y_position -= 25
-        if y_position < 100:
-            c.showPage()
-            y_position = height - 50
-    
-    c.save()
-    return send_file(pdf_path, as_attachment=True)
-=======
-    doc = SimpleDocTemplate(pdf_path, pagesize=A4)
+    doc = SimpleDocTemplate(pdf_path, pagesize=letter)
     styles = getSampleStyleSheet()
     normal_style = ParagraphStyle(
         "Normal",
@@ -200,8 +152,7 @@ def generate_pdf_report(employee_name):
         elements.append(Paragraph("No specific training recommendations needed.", normal_style))
     
     doc.build(elements)
-    return send_file(pdf_path, as_attachment=True, mimetype="application/pdf")
->>>>>>> d269442 (restart)
+    return send_file(pdf_path, as_attachment=True, mimetype='application/pdf')
 
 if __name__ == "__main__":
     app.run(debug=True)
