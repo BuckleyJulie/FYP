@@ -4,7 +4,11 @@ OPENAI_API_KEY
 
 # Ignore Python cache files
 __pycache__/
+<<<<<<< HEAD
 *.py[cod]
 
 # Ignore virtual environment
 venv/
+=======
+*.py[cod]
+>>>>>>> d269442 (restart)

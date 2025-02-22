@@ -20,4 +20,8 @@ def get_script_response(user_input, conversation):
 
         return reply
     except Exception as e:
+<<<<<<< HEAD
         return f"An error occurred: {e}"
+=======
+        return f"An error occurred: {e}"
+>>>>>>> d269442 (restart)
