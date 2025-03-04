@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const startForm = document.getElementById("start-form");
     const startButton = document.getElementById("start-btn");
 
+
     function updateChat(messages) {
         chatBox.innerHTML = ""; // Clear chat
         messages.forEach(msg => {
@@ -16,6 +17,7 @@ document.addEventListener("DOMContentLoaded", function () {
         chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll
     }
 
+    // Handle the chat form (if this form is solely for starting the conversation)
     startForm.addEventListener("submit", function (event) {
         event.preventDefault();
 
@@ -31,6 +33,7 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(data => updateChat(data.conversation));
     });
 
+    // Send message when send button is clicked
     sendButton.addEventListener("click", function () {
         const message = userInput.value.trim();
         if (!message) return;
@@ -46,9 +49,11 @@ document.addEventListener("DOMContentLoaded", function () {
         userInput.value = ""; // Clear input field
     });
 
+    // Remove or comment out this keypress listener to avoid duplicate submissions:
     userInput.addEventListener("keypress", function (event) {
         if (event.key === "Enter") {
-            sendButton.click();
+             event.preventDefault();
+             sendButton.click();
         }
-    });
+ });
 });

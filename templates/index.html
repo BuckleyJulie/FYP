@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Phishing Simulator</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
     <script src="{{ url_for('static', filename='chat.js') }}" defer></script>
@@ -8,43 +10,154 @@
 <body>
     <h1>AI Phishing Script Generator</h1>
 
+    <!-- Form to start the chat -->
     <form id="start-form">
-        <label for="employee_name">Employee Name:</label>
-        <input type="text" id="employee-name" name="employee_name" required>
-
-        <label for="script-choice">Choose a script:</label>
-        <select id="script-choice" name="script_choice">
-            <option value="bank_call">Bank Verification Call</option>
-            <option value="helpdesk">IT Helpdesk Call</option>
-        </select>
-
-        <button type="submit" id="start-btn">Start Chat</button>
+        <div class="form-section">
+            <label for="employee_name">Victim Name:</label>
+            <input type="text" id="employee_name" name="employee_name" required>
+        </div>
+        <div class="form-section">
+            <label for="gender">Gender:</label>
+            <select id="gender" name="gender">
+                <option value="female">Female</option>
+                <option value="male">Male</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        <div class="form-section">
+            <label for="occupation">Occupation:</label>
+            <input type="text" id="occupation" name="occupation" required>
+        </div>
+        <div class="form-section">
+            <label for="has-car">Do they have a car?</label>
+            <select id="has-car" name="has_car">
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+            </select>
+        </div>
+        <div id="car-details" style="display: none;">
+            <div class="form-section">
+                <label for="car-reg">Car Registration:</label>
+                <input type="text" id="car-reg" name="car_reg" placeholder="e.g. ABC-123">
+            </div>
+        </div>
+        <div class="form-section">
+            <label for="has-children">Do they have children?</label>
+            <select id="has-children" name="has_children">
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+            </select>
+        </div>
+        <div id="children-details" style="display: none;">
+            <div class="form-section">
+                <label for="num-children">Number of Children:</label>
+                <input type="number" id="num-children" name="num_children" min="0">
+            </div>
+            <div class="form-section">
+                <label for="children-names">Children Names (comma-separated):</label>
+                <input type="text" id="children-names" name="children_names" placeholder="e.g., Alice, Bob">
+            </div>
+        </div>
+        <button type="submit">Start Chat</button>
     </form>
 
+    <!-- Chat Box Section -->
     <div id="chat-box" class="chat-box"></div>
-
+    
     <div id="chat-controls">
         <input type="text" id="user-input" placeholder="Your response..." required>
         <button id="send-btn">Send</button>
     </div>
-
+    
     <button id="endChatButton">End Chat</button>
     <a id="reportLink" style="display:none;" download>Download Report</a>
 
     <script>
-    document.getElementById("endChatButton").addEventListener("click", function() {
-        fetch("/end_chat", { method: "POST" })
-        .then(response => response.json())
-        .then(data => {
-            if (data.report_url) {
-                let reportLink = document.getElementById("reportLink");
-                reportLink.href = data.report_url;
-                reportLink.style.display = "block";
-                reportLink.innerText = "Download Report";
-            }
+        // Toggle visibility for car details based on selection
+        document.getElementById("has-car").addEventListener("change", function() {
+            document.getElementById("car-details").style.display = (this.value === "yes") ? "block" : "none";
         });
-    });
-    </script>
 
+        // Toggle visibility for children details based on selection
+        document.getElementById("has-children").addEventListener("change", function() {
+            document.getElementById("children-details").style.display = (this.value === "yes") ? "block" : "none";
+        });
+
+        // Handle form submission to start the conversation
+        document.getElementById("start-form").addEventListener("submit", function(event) {
+            event.preventDefault();  // Prevent the form from submitting the traditional way
+            
+            const formData = new FormData(this);
+            const data = {
+                "employee_name": formData.get("employee_name"),
+                "gender": formData.get("gender"),
+                "occupation": formData.get("occupation"),
+                "has_car": formData.get("has_car"),
+                "car_reg": formData.get("car_reg"),
+                "has_children": formData.get("has_children"),
+                "num_children": formData.get("num_children"),
+                "children_names": formData.get("children_names")
+            };
+
+            fetch("/start", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Process the response from the server (e.g., start conversation, show chat box)
+                if (data.conversation) {
+                    const chatBox = document.getElementById("chat-box");
+                    chatBox.innerHTML = "<p>Chat Started!</p>";  // Replace with actual chat UI
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        });
+
+        // Handle user input and send message to the server
+        document.getElementById("send-btn").addEventListener("click", function() {
+            const userInput = document.getElementById("user-input").value;
+            if (!userInput) return;
+            
+            fetch("/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ "user_input": userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const chatBox = document.getElementById("chat-box");
+                chatBox.innerHTML = "";  // Clear the chat box before adding new messages
+                data.conversation.forEach(message => {
+                    const messageDiv = document.createElement("div");
+                    messageDiv.textContent = message.content;
+                    chatBox.appendChild(messageDiv);
+                });
+            })
+            .catch(error => console.error("Error:", error));
+
+            // Clear the input field after sending
+            document.getElementById("user-input").value = "";
+        });
+
+        // Handle end chat button click to generate report link
+        document.getElementById("endChatButton").addEventListener("click", function() {
+            fetch("/end_chat", { method: "POST" })
+            .then(response => response.json())
+            .then(data => {
+                if (data.report_url) {
+                    let reportLink = document.getElementById("reportLink");
+                    reportLink.href = data.report_url;
+                    reportLink.style.display = "block";
+                    reportLink.innerText = "Download Report";
+                }
+            });
+        });
+    </script>
 </body>
 </html>

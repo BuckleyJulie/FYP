@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, session, jsonify, send_file, url_for
 from chatbot.gpt import get_script_response
-from chatbot.scripts import get_script
+from chatbot.scripts import get_script, create_custom_prompt
 from chatbot.database import init_db, log_interaction, get_user_data
 from reportlab.lib.pagesizes import A4, letter
 from reportlab.lib import colors
@@ -20,18 +20,32 @@ def index():
 
 @app.route("/start", methods=["POST"])
 def start_conversation():
-    session["conversation"] = []
-    session["script_initialized"] = False
+    # Read all victim details from the requestest
     data = request.get_json()
-    employee_name = data.get("employee_name")
-    script_choice = data.get("script_choice")
 
-    # Generate initial script
-    initial_script = get_script(script_choice, employee_name)
-    session["conversation"].append({"role": "assistant", "content": initial_script})
+    if not data:
+        return jsonify({"error": "No data provided."}), 400
+    victim_details = {
+        "employee_name": data.get("employee_name"),
+        "gender": data.get("gender"),
+        "occupation": data.get("occupation"),
+        "has_car": data.get("has_car"),
+        "car_reg": data.get("car_reg"),
+        "has_children": data.get("has_children"),
+        "num_children": data.get("num_children"),
+        "children_names": data.get("children_names")
+    }
+    
+    # Store victim details in the session
+    session["victim_details"] = victim_details
+    
+    # Generate a custom prompt using victim details
+    custom_prompt = create_custom_prompt(victim_details)
+    
+    # Start conversation with the custom prompt
+    session["conversation"] = [{"role": "system", "content": custom_prompt}]
     session["script_initialized"] = True
-    session["employee_name"] = employee_name
-    session["script_type"] = script_choice
+    session["employee_name"] = victim_details["employee_name"]
     session.modified = True
 
     return jsonify({"conversation": session["conversation"]})
@@ -44,13 +58,13 @@ def chat():
     if "conversation" not in session:
         session["conversation"] = []
 
-    employee_name = session.get("employee_name", "Unknown")
-    script_type = session.get("script_type", "Unknown")
-
     session["conversation"].append({"role": "user", "content": user_input})
     ai_response = get_script_response(user_input, session["conversation"])
     session["conversation"].append({"role": "assistant", "content": ai_response})
     session.modified = True
+ # Fetch employee name and script type from session (ensure they're available)
+    employee_name = session.get("employee_name", "Unknown")
+    script_type = session.get("script_type", "custom")
 
     log_interaction(employee_name, script_type, user_input, ai_response)  # Store in DB
 
@@ -70,6 +84,7 @@ def end_chat():
     session.pop("script_initialized", None)
     session.pop("employee_name", None)
     session.pop("script_type", None)
+    session.pop("victim_details", None)
 
     return jsonify({"message": "Chat ended. Report generated.", "report_url": report_url})
 

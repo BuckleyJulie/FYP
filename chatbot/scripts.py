@@ -1,9 +1,30 @@
-phishing_scripts = {
-    "bank_call": "You are calling {employee_name} from the bank to verify some security details and need them to answer questions to gain access to their account. try to obtain a password, 6 digit authentication and the answers to common security questions. Keep asking foe information until you have enough to gain access to their account.",
-    "helpdesk": "You are an IT support technician calling {employee_name} about their account security. You need them to verify their account details and provide their password and security questions. Keep the conversation going until you have enough information to access their account.",
-}
+# chatbot/scripts.py
 
-def get_script(script_name, employee_name):
-    """Retrieves and formats a script based on user selection."""
-    script = phishing_scripts.get(script_name, "Invalid script choice.")
-    return script.format(employee_name=employee_name)
+def get_script(script_choice, victim_name):
+    """
+    Returns an initial phishing script based on the chosen scenario.
+    """
+    if script_choice == "bank_call":
+        return f"You are calling {victim_name} from the bank to verify some account details. Be persuasive but cautious."
+    elif script_choice == "helpdesk":
+        return f"You are calling {victim_name} from IT support to address security concerns regarding their account."
+    else:
+        return "Default phishing script."
+
+def create_custom_prompt(victim_details):
+    """
+    Constructs a custom prompt for the AI based on detailed victim information.
+    """
+    prompt = (f"You are a social engineer preparing a phishing call training scenario. "
+              f"Your target is {victim_details['employee_name']}, a {victim_details['gender']} individual working as a {victim_details['occupation']}. ")
+    if victim_details.get("has_car"):
+        prompt += "They own a car. "
+        if victim_details.get("car_reg"):
+            prompt += f"The car registration number is {victim_details['car_reg']}. "
+    if victim_details.get("has_children"):
+        num = victim_details.get("num_children", 0)
+        names = ", ".join(victim_details.get("children_names", [])) if victim_details.get("children_names") else "unknown names"
+        prompt += f"They have {num} children: {names}. "
+    prompt += "Based on this profile, design a persuasive and adaptive phishing script tailored for this individual. This script is to gain access to sensitive information and you need to keep them on the phone for as long as possible."
+    return prompt
+
