@@ -25,38 +25,57 @@
             </select>
         </div>
         <div class="form-section">
-            <label for="occupation">Occupation:</label>
-            <input type="text" id="occupation" name="occupation" required>
+            <label for="job_description">Job Description:</label>
+            <input type="textarea" id="job_description" name="job_description" required>
         </div>
         <div class="form-section">
-            <label for="has-car">Do they have a car?</label>
-            <select id="has-car" name="has_car">
-                <option value="no">No</option>
-                <option value="yes">Yes</option>
-            </select>
-        </div>
-        <div id="car-details" style="display: none;">
-            <div class="form-section">
-                <label for="car-reg">Car Registration:</label>
-                <input type="text" id="car-reg" name="car_reg" placeholder="e.g. ABC-123">
-            </div>
+            <label for="company_name">Company Name:</label>
+            <input type="text" id="company_name" name="company_name" required>
         </div>
         <div class="form-section">
-            <label for="has-children">Do they have children?</label>
-            <select id="has-children" name="has_children">
-                <option value="no">No</option>
-                <option value="yes">Yes</option>
+            <label for="location">Location:</label>
+            <select id="location" name="location" required>
+                <option value="USA">United States</option>
+                <option value="Canada">Canada</option>
+                <option value="UK">United Kingdom</option>
+                <option value="Netherlands">Netherlands</option>
+                <option value="Switzerland">Switzerland</option>
+                <option value="Sweden">Sweden</option>
+                <option value="Norway">Norway</option>
+                <option value="Ireland">Ireland</option>
+                <option value="Australia">Australia</option>
+                <option value="India">India</option>
+                <option value="Germany">Germany</option>
+                <option value="France">France</option>
+                <option value="Italy">Italy</option>
+                <option value="Brazil">Brazil</option>
+                <option value="Japan">Japan</option>
+                <option value="South Africa">South Africa</option>
+                <option value="Mexico">Mexico</option>
+                <option value="China">China</option>
+                <option value="South Korea">South Korea</option>
+                <option value="Singapore">Singapore</option>
+                <option value="Malaysia">Malaysia</option>
+                <option value="Philippines">Philippines</option>
+                <option value="Indonesia">Indonesia</option>
+                <option value="Vietnam">Vietnam</option>
+                <option value="Thailand">Thailand</option>
+                <option value="Turkey">Turkey</option>
+                <option value="Saudi Arabia">Saudi Arabia</option>
+                <option value="UAE">United Arab Emirates</option>
+                <option value="Qatar">Qatar</option>
+                <option value="Kuwait">Kuwait</option>
+                <option value="Oman">Oman</option>
+                <option value="Bahrain">Bahrain</option>
+                <option value="Jordan">Jordan</option>
+                <option value="Lebanon">Lebanon</option>
+                <option value="Egypt">Egypt</option>
+                <option value="Morocco">Morocco</option>
+                <option value="Algeria">Algeria</option>
+                <option value="Russia">Russia</option>
+                <option value="Spain">Spain</option>
+                <!-- Add more countries as needed -->
             </select>
-        </div>
-        <div id="children-details" style="display: none;">
-            <div class="form-section">
-                <label for="num-children">Number of Children:</label>
-                <input type="number" id="num-children" name="num_children" min="0">
-            </div>
-            <div class="form-section">
-                <label for="children-names">Children Names (comma-separated):</label>
-                <input type="text" id="children-names" name="children_names" placeholder="e.g., Alice, Bob">
-            </div>
         </div>
         <button type="submit">Start Chat</button>
     </form>
@@ -73,16 +92,6 @@
     <a id="reportLink" style="display:none;" download>Download Report</a>
 
     <script>
-        // Toggle visibility for car details based on selection
-        document.getElementById("has-car").addEventListener("change", function() {
-            document.getElementById("car-details").style.display = (this.value === "yes") ? "block" : "none";
-        });
-
-        // Toggle visibility for children details based on selection
-        document.getElementById("has-children").addEventListener("change", function() {
-            document.getElementById("children-details").style.display = (this.value === "yes") ? "block" : "none";
-        });
-
         // Handle form submission to start the conversation
         document.getElementById("start-form").addEventListener("submit", function(event) {
             event.preventDefault();  // Prevent the form from submitting the traditional way
@@ -91,12 +100,9 @@
             const data = {
                 "employee_name": formData.get("employee_name"),
                 "gender": formData.get("gender"),
-                "occupation": formData.get("occupation"),
-                "has_car": formData.get("has_car"),
-                "car_reg": formData.get("car_reg"),
-                "has_children": formData.get("has_children"),
-                "num_children": formData.get("num_children"),
-                "children_names": formData.get("children_names")
+                "job_description": formData.get("job_description"),
+                "company_name": formData.get("company_name"),
+                "location": formData.get("location")
             };
 
             fetch("/start", {

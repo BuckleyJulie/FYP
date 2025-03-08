@@ -20,20 +20,18 @@ def index():
 
 @app.route("/start", methods=["POST"])
 def start_conversation():
-    # Read all victim details from the requestest
+    # Read all victim details from the request
     data = request.get_json()
 
     if not data:
         return jsonify({"error": "No data provided."}), 400
+
     victim_details = {
         "employee_name": data.get("employee_name"),
         "gender": data.get("gender"),
-        "occupation": data.get("occupation"),
-        "has_car": data.get("has_car"),
-        "car_reg": data.get("car_reg"),
-        "has_children": data.get("has_children"),
-        "num_children": data.get("num_children"),
-        "children_names": data.get("children_names")
+        "job_description": data.get("job_description"),
+        "company_name": data.get("company_name"),
+        "location": data.get("location")  # Location added here
     }
     
     # Store victim details in the session
@@ -58,11 +56,17 @@ def chat():
     if "conversation" not in session:
         session["conversation"] = []
 
+    # Add the user's input to the conversation
     session["conversation"].append({"role": "user", "content": user_input})
+
+    # Generate the AI's response based on the updated conversation
     ai_response = get_script_response(user_input, session["conversation"])
+
+    # Add the AI's response to the conversation
     session["conversation"].append({"role": "assistant", "content": ai_response})
     session.modified = True
- # Fetch employee name and script type from session (ensure they're available)
+
+    # Fetch employee name and script type from session (ensure they're available)
     employee_name = session.get("employee_name", "Unknown")
     script_type = session.get("script_type", "custom")
 
