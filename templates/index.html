@@ -132,11 +132,12 @@
             .then(response => response.json())
             .then(data => {
                 const chatBox = document.getElementById("chat-box");
-                chatBox.innerHTML = "";  // Clear the chat box before adding new messages
                 data.conversation.forEach(message => {
-                    const messageDiv = document.createElement("div");
-                    messageDiv.textContent = message.content;
-                    chatBox.appendChild(messageDiv);
+                    if (![...chatBox.children].some(child => child.textContent === message.content)) {
+                        const messageDiv = document.createElement("div");
+                        messageDiv.textContent = message.content;
+                        chatBox.appendChild(messageDiv);
+                    }
                 });
             })
             .catch(error => console.error("Error:", error));
