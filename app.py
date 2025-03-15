@@ -8,6 +8,12 @@ from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 import os
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY")) # Import OpenAI API client
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = "super secret key"
@@ -33,13 +39,13 @@ def start_conversation():
         "company_name": data.get("company_name"),
         "location": data.get("location")  # Location added here
     }
-    
+
     # Store victim details in the session
     session["victim_details"] = victim_details
-    
+
     # Generate a custom prompt using victim details
     custom_prompt = create_custom_prompt(victim_details)
-    
+
     # Start conversation with the custom prompt
     session["conversation"] = [{"role": "system", "content": custom_prompt}]
     session["script_initialized"] = True
@@ -73,6 +79,58 @@ def chat():
     log_interaction(employee_name, script_type, user_input, ai_response)  # Store in DB
 
     return jsonify({"conversation": session["conversation"]})
+
+@app.route("/speech-to-text", methods=["POST"])
+def speech_to_text():
+    if "audio" not in request.files:
+        return jsonify({"error": "No audio file provided"}), 400
+
+    audio_file = request.files["audio"]
+    file_path = "data/audio.mp3"
+
+    audio_file.save(file_path)
+    try:
+        # Open the saved file for transcription
+        with open(file_path, "rb") as f:
+            response = client.audio.transcriptions.create(model="whisper-1", file=f)
+
+        # Print the full response to see its structure
+        print("Transcription Response:", response)
+
+        # Extract transcribed text from the response
+        transcribed_text = response.text  # Accessing text directly from response
+
+        if transcribed_text:
+            # Add the transcribed text to the conversation
+            session["conversation"].append({"role": "user", "content": transcribed_text})
+            session.modified = True
+
+            # Generate the AI's response based on the updated conversation
+            ai_response = get_script_response(transcribed_text, session["conversation"])
+            session["conversation"].append({"role": "assistant", "content": ai_response})
+            session.modified = True
+
+            # Fetch employee name and script type from session (ensure they're available)
+            employee_name = session.get("employee_name", "Unknown")
+            script_type = session.get("script_type", "custom")
+
+            # Log the interaction to the database
+            log_interaction(employee_name, script_type, transcribed_text, ai_response)
+
+            return jsonify({"conversation": session["conversation"], "listening": True})
+
+        else:
+            return jsonify({"error": "Failed to transcribe audio."}), 500
+
+    except Exception as e:
+        print(f"Error during speech-to-text transcription: {str(e)}")
+        return jsonify({"error": "An error occurred during speech-to-text transcription."}), 500
+
+    finally:
+        # Ensure the file exists before attempting to delete it
+        if os.path.exists(file_path):
+            os.remove(file_path)  # Delete temp file after processing
+
 
 @app.route("/end_chat", methods=["POST"])
 def end_chat():
@@ -112,11 +170,11 @@ def generate_pdf_report(employee_name):
 
     elements.append(Paragraph(f"Security Awareness Training Report for {employee_name}", styles["Title"]))
     elements.append(Spacer(1, 12))
-    
+
     table_data = [["Timestamp", "Script Type", "User Response", "AI Feedback"]]
     disclosed_info = set()
     training_recommendations = set()
-    
+
     for entry in user_data:
         _, _, script, user_resp, ai_resp, timestamp = entry
         table_data.append([
@@ -125,7 +183,7 @@ def generate_pdf_report(employee_name):
             Paragraph(user_resp, normal_style),
             Paragraph(ai_resp, normal_style)
         ])
-        
+
         # Identifying disclosed information
         if "@" in user_resp:
             disclosed_info.add("Email Address")
@@ -139,7 +197,7 @@ def generate_pdf_report(employee_name):
         if user_resp.isdigit() and len(user_resp) == 6:
             disclosed_info.add("Authentication Code")
             training_recommendations.add("Never Share Authentication Codes Over the Phone")
-    
+
     table = Table(table_data, colWidths=[1.2 * inch, 1.2 * inch, 2.8 * inch, 2.8 * inch])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
@@ -152,7 +210,7 @@ def generate_pdf_report(employee_name):
     ]))
     elements.append(table)
     elements.append(Spacer(1, 20))
-    
+
     elements.append(Paragraph("Disclosed Information:", styles["Heading2"]))
     elements.append(Spacer(1, 8))
     if disclosed_info:
@@ -161,7 +219,7 @@ def generate_pdf_report(employee_name):
     else:
         elements.append(Paragraph("No sensitive information was disclosed.", normal_style))
     elements.append(Spacer(1, 20))
-    
+
     elements.append(Paragraph("Recommended Security Training Areas:", styles["Heading2"]))
     elements.append(Spacer(1, 8))
     if training_recommendations:
@@ -169,7 +227,7 @@ def generate_pdf_report(employee_name):
             elements.append(Paragraph(f"- {rec}", normal_style))
     else:
         elements.append(Paragraph("No specific training recommendations needed.", normal_style))
-    
+
     doc.build(elements)
     return send_file(pdf_path, as_attachment=True, mimetype='application/pdf')
 

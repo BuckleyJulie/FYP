@@ -35,46 +35,13 @@
         <div class="form-section">
             <label for="location">Location:</label>
             <select id="location" name="location" required>
-                <option value="USA">United States</option>
+                <option value="USA">USA</option>
+                <option value="UK">UK</option>
                 <option value="Canada">Canada</option>
-                <option value="UK">United Kingdom</option>
-                <option value="Netherlands">Netherlands</option>
-                <option value="Switzerland">Switzerland</option>
-                <option value="Sweden">Sweden</option>
-                <option value="Norway">Norway</option>
-                <option value="Ireland">Ireland</option>
                 <option value="Australia">Australia</option>
+                <option value="Ireland">Ireland</option>
                 <option value="India">India</option>
-                <option value="Germany">Germany</option>
-                <option value="France">France</option>
-                <option value="Italy">Italy</option>
-                <option value="Brazil">Brazil</option>
-                <option value="Japan">Japan</option>
-                <option value="South Africa">South Africa</option>
-                <option value="Mexico">Mexico</option>
-                <option value="China">China</option>
-                <option value="South Korea">South Korea</option>
-                <option value="Singapore">Singapore</option>
-                <option value="Malaysia">Malaysia</option>
-                <option value="Philippines">Philippines</option>
-                <option value="Indonesia">Indonesia</option>
-                <option value="Vietnam">Vietnam</option>
-                <option value="Thailand">Thailand</option>
-                <option value="Turkey">Turkey</option>
-                <option value="Saudi Arabia">Saudi Arabia</option>
-                <option value="UAE">United Arab Emirates</option>
-                <option value="Qatar">Qatar</option>
-                <option value="Kuwait">Kuwait</option>
-                <option value="Oman">Oman</option>
-                <option value="Bahrain">Bahrain</option>
-                <option value="Jordan">Jordan</option>
-                <option value="Lebanon">Lebanon</option>
-                <option value="Egypt">Egypt</option>
-                <option value="Morocco">Morocco</option>
-                <option value="Algeria">Algeria</option>
-                <option value="Russia">Russia</option>
-                <option value="Spain">Spain</option>
-                <!-- Add more countries as needed -->
+                <option value="Other">Other</option>
             </select>
         </div>
         <button type="submit">Start Chat</button>
@@ -87,6 +54,10 @@
         <input type="text" id="user-input" placeholder="Your response..." required>
         <button id="send-btn">Send</button>
     </div>
+
+    <!-- Audio recording functionality -->
+    <button id="record-btn">🎤 Start Recording</button>
+
     
     <button id="endChatButton">End Chat</button>
     <a id="reportLink" style="display:none;" download>Download Report</a>
@@ -165,6 +136,58 @@
                 }
             });
         });
+
+       // Handle audio recording
+       let mediaRecorder;
+        let audioChunks = [];
+        const recordButton = document.getElementById('record-btn');
+
+        // Start/Stop recording audio
+        recordButton.addEventListener('click', async () => {
+            if (recordButton.textContent === "🎤 Start Recording") {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    uploadAudio(audioBlob);  // Upload audio to server
+                };
+
+                mediaRecorder.start();
+                recordButton.textContent = "🎤 Stop Recording";  // Change button text to 'Stop Recording'
+            } else {
+                mediaRecorder.stop();
+                recordButton.textContent = "🎤 Start Recording";  // Change button text back to 'Start Recording'
+            }
+        });
+
+        // Upload the recorded audio to the server
+        function uploadAudio(audioBlob) {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'audio.wav');
+
+            fetch('/speech-to-text', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Directly append the transcribed text to the chat
+                const chatBox = document.getElementById("chat-box");
+                data.conversation.forEach(message => {
+                    if (![...chatBox.children].some(child => child.textContent === message.content)) {
+                        const messageDiv = document.createElement("div");
+                        messageDiv.textContent = message.content;
+                        chatBox.appendChild(messageDiv);
+                    }
+                });
+            })
+            .catch(error => console.error('Error uploading audio:', error));
+        }
     </script>
 </body>
 </html>
