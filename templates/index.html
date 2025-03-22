@@ -4,63 +4,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Phishing Simulator</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}?v=1.6">
     <script src="{{ url_for('static', filename='chat.js') }}" defer></script>
 </head>
 <body>
-    <h1>AI Phishing Script Generator</h1>
-
-    <!-- Form to start the chat -->
-    <form id="start-form">
-        <div class="form-section">
-            <label for="employee_name">Victim Name:</label>
-            <input type="text" id="employee_name" name="employee_name" required>
-        </div>
-        <div class="form-section">
-            <label for="gender">Gender:</label>
-            <select id="gender" name="gender">
-                <option value="female">Female</option>
-                <option value="male">Male</option>
-                <option value="other">Other</option>
-            </select>
-        </div>
-        <div class="form-section">
-            <label for="job_description">Job Description:</label>
-            <input type="textarea" id="job_description" name="job_description" required>
-        </div>
-        <div class="form-section">
-            <label for="company_name">Company Name:</label>
-            <input type="text" id="company_name" name="company_name" required>
-        </div>
-        <div class="form-section">
-            <label for="location">Location:</label>
-            <select id="location" name="location" required>
-                <option value="USA">USA</option>
-                <option value="UK">UK</option>
-                <option value="Canada">Canada</option>
-                <option value="Australia">Australia</option>
-                <option value="Ireland">Ireland</option>
-                <option value="India">India</option>
-                <option value="Other">Other</option>
-            </select>
-        </div>
-        <button type="submit">Start Chat</button>
-    </form>
-
-    <!-- Chat Box Section -->
-    <div id="chat-box" class="chat-box"></div>
-    
-    <div id="chat-controls">
-        <input type="text" id="user-input" placeholder="Your response..." required>
-        <button id="send-btn">Send</button>
+    <div class="header">
+        <h1>👿 AI Phishing Script Simulator 👿</h1>
     </div>
 
-    <!-- Audio recording functionality -->
-    <button id="record-btn">🎤 Start Recording</button>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Start Scenario</h1>
+            <!-- Form to start the chat -->
+            <form id="start-form">
+                <label for="employee_name">Victim Name:</label>
+                <input type="text" id="employee_name" name="employee_name" required>
+                    
+                <label for="gender">Gender:</label>
+                <select id="gender" name="gender">
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                    <option value="other">Other</option>
+                </select>
 
-    
-    <button id="endChatButton">End Chat</button>
-    <a id="reportLink" style="display:none;" download>Download Report</a>
+                <label for="job_description">Job Description:</label>
+                <textarea id="job_description" name="job_description" required></textarea>
+
+                <label for="company_name">Company Name:</label>
+                <input type="text" id="company_name" name="company_name" required>
+
+                <label for="location">Location:</label>
+                <select id="location" name="location" required>
+                    <option value="Ireland">Ireland</option>
+                    <option value="USA">USA</option>
+                    <option value="UK">UK</option>
+                    <option value="Canada">Canada</option>
+                    <option value="Australia">Australia</option>
+                    <option value="India">India</option>
+                    <option value="Other">Other</option>
+                </select>
+
+                <button type="submit">Start Chat</button>
+            </form>
+        </div>
+
+        <div class="main-chat">
+            <h2>Chat</h2>
+        <!-- Chat Box Section -->
+            <div id="chat-box" class="chat-box"></div>
+            
+            <div id="chat-controls">
+                <input type="text" id="user-input" placeholder="Your response..." required>
+                <button id="send-btn">Send</button>
+                <!-- Audio recording functionality -->
+                <button id="record-btn">🎤 Start Recording</button>
+                <button id="endChatButton">End Chat</button>
+                <a id="reportLink" style="display:none;" download>Download Report</a>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Handle form submission to start the conversation
@@ -84,11 +86,11 @@
                 body: JSON.stringify(data)
             })
             .then(response => response.json())
-            .then(data => {
+            .then(() => {
                 // Process the response from the server (e.g., start conversation, show chat box)
                 if (data.conversation) {
                     const chatBox = document.getElementById("chat-box");
-                    chatBox.innerHTML = "<p>Chat Started!</p>";  // Replace with actual chat UI
+                    chatBox.innerHTML = "<p><strong>Chat Started!</strong></p>";  // Replace with actual chat UI
                 }
             })
             .catch(error => console.error("Error:", error));
@@ -109,13 +111,21 @@
             .then(response => response.json())
             .then(data => {
                 const chatBox = document.getElementById("chat-box");
-                data.conversation.forEach(message => {
-                    if (![...chatBox.children].some(child => child.textContent === message.content)) {
-                        const messageDiv = document.createElement("div");
-                        messageDiv.textContent = message.content;
-                        chatBox.appendChild(messageDiv);
+                data.conversation.slice(-2).forEach(message => {
+                    const messageDiv = document.createElement("div");
+
+                    if (message.role === "user") {
+                        messageDiv.innerHTML = `<strong>User:</strong> ${message.content}`;
+                    } else if (message.role === "assistant") {
+                        messageDiv.innerHTML = `<strong>AI:</strong> ${message.content}`;
                     }
+                    chatBox.appendChild(messageDiv);
+                    chatBox.appendChild(document.createElement("br"));
+
                 });
+                chatBox.scrollTop = chatBox.scrollHeight;
+                document.getElementById("user-input").value = "";
+
             })
             .catch(error => console.error("Error:", error));
 
@@ -138,37 +148,42 @@
         });
 
        // Handle audio recording
-       let mediaRecorder;
+        let mediaRecorder;
         let audioChunks = [];
         const recordButton = document.getElementById('record-btn');
 
         // Start/Stop recording audio
         recordButton.addEventListener('click', async () => {
-            if (recordButton.textContent === "🎤 Start Recording") {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                recordButton.textContent = '🎤 Start Recording';
+            } 
+            else {
+                audioChunks = [];
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
+                // Explicitly set MIME type for clarity and better compatibility
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm; codecs=opus' });
 
-                mediaRecorder.ondataavailable = (event) => {
-                    audioChunks.push(event.data);
+                mediaRecorder.ondataavailable = event => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
                 };
 
                 mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                    uploadAudio(audioBlob);  // Upload audio to server
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    uploadAudio(audioBlob);
                 };
-
+                
                 mediaRecorder.start();
-                recordButton.textContent = "🎤 Stop Recording";  // Change button text to 'Stop Recording'
-            } else {
-                mediaRecorder.stop();
-                recordButton.textContent = "🎤 Start Recording";  // Change button text back to 'Start Recording'
+                recordButton.textContent = '⏹️ Stop Recording';
             }
         });
 
         // Upload the recorded audio to the server
         function uploadAudio(audioBlob) {
             const formData = new FormData();
-            formData.append('audio', audioBlob, 'audio.wav');
+            formData.append('audio', audioBlob, 'audio.webm');
 
             fetch('/speech-to-text', {
                 method: 'POST',
@@ -179,12 +194,19 @@
                 // Directly append the transcribed text to the chat
                 const chatBox = document.getElementById("chat-box");
                 data.conversation.forEach(message => {
-                    if (![...chatBox.children].some(child => child.textContent === message.content)) {
-                        const messageDiv = document.createElement("div");
-                        messageDiv.textContent = message.content;
-                        chatBox.appendChild(messageDiv);
+                    const MessageDiv = document.createElement("div");
+
+                    if (message.role === 'user') {
+                        messageDiv.innerHTML = `<strong>User:</strong> ${message.content}`;
+                    } else if (message.role === 'assistant') {
+                        messageDiv.innerHTML = `<strong>AI:</strong> ${message.content}`;
                     }
+
+                    chatBox.appendChild(messageDiv);
+                    chatBox.appendChild(document.createElement("br"));
                 });
+
+                chatBox.scrollTop = chatBox.scrollHeight;
             })
             .catch(error => console.error('Error uploading audio:', error));
         }

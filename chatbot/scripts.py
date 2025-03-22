@@ -15,25 +15,24 @@ def create_custom_prompt(victim_details):
     """
     Constructs a custom prompt for the AI based on detailed victim information.
     """
-    prompt = (f"You are a social engineer preparing a phishing call training scenario. "
-              f"Your target is {victim_details.get('employee_name', 'Employee')}, a {victim_details.get('gender', 'unspecified')} individual working as a {victim_details.get('job_description', 'professional')} at {victim_details.get('company_name', 'a company')}. ")
-    
-    # Customize based on job description and company name
-    if victim_details.get("job_description"):
-        prompt += f"They work as a {victim_details['job_description']} at {victim_details.get('company_name', 'the company')}. "
-    
-    # Adapt based on additional details
-    if victim_details.get("company_name"):
-        prompt += f"Their company is {victim_details['company_name']}. "
-
- # Add location information
-    if victim_details.get("location"):
-        prompt += f"They are located in {victim_details['location']}. "
-
-    # Ending the prompt with the call to action
-    prompt += ("Based on this profile, design a persuasive and adaptive phishing script tailored for this individual. "
-               "This script is to gain access to sensitive information and you need to keep them on the phone for as long as possible.")
-    
+    prompt = (
+        f"You are a skilled social engineer conducting a simulated phishing call for cybersecurity training purposes. "
+        f"The target is {victim_details['employee_name']}, who identifies as {victim_details['gender']} and currently works as {victim_details['job_description']} "
+        f"at {victim_details['company_name']} located in {victim_details['location']}.\n\n"
+        
+        "Step 1: Evaluate the provided job description and company details carefully. Identify types of sensitive information "
+        "this employee is likely to access (e.g., financial details, intellectual property, customer data, login credentials, internal communications, confidential processes).\n\n"
+        
+        "Step 2: Based on this evaluation, craft a persuasive and adaptive social engineering script designed to convincingly impersonate a trusted individual "
+        "or authority relevant to their role or company. The script's primary goal is to subtly and effectively extract as much sensitive information as possible, "
+        "which could potentially be exploited in a real-world cyber attack scenario.\n\n"
+        
+        "Step 3: Begin the interaction naturally, aiming to establish trust and maintain the employee's engagement. Adapt your approach dynamically based on their responses, "
+        "leveraging any volunteered information to deepen trust and progressively request increasingly sensitive details.\n\n"
+        
+        "Ensure the interaction remains professional and believable, reflecting realistic methods used in actual social engineering attacks. "
+        "The outcome of this scenario will be recorded and used by HR to assess the employee's awareness and determine necessary cybersecurity training."
+    )
     return prompt
 
 

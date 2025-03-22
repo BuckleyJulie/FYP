@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", template_folder="templates")
 app.secret_key = "super secret key"
 
 init_db()  # Ensure database is initialized
@@ -52,7 +52,7 @@ def start_conversation():
     session["employee_name"] = victim_details["employee_name"]
     session.modified = True
 
-    return jsonify({"conversation": session["conversation"]})
+    return jsonify({"conversation": [{"role": "system", "content": "Chat started!"}]})
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -78,7 +78,7 @@ def chat():
 
     log_interaction(employee_name, script_type, user_input, ai_response)  # Store in DB
 
-    return jsonify({"conversation": session["conversation"]})
+    return jsonify({"user_input": user_input, "ai_response": ai_response})
 
 @app.route("/speech-to-text", methods=["POST"])
 def speech_to_text():
@@ -86,39 +86,41 @@ def speech_to_text():
         return jsonify({"error": "No audio file provided"}), 400
 
     audio_file = request.files["audio"]
-    file_path = "data/audio.mp3"
-
+    file_path = "temp_audio.webm"
     audio_file.save(file_path)
+    
     try:
         # Open the saved file for transcription
         with open(file_path, "rb") as f:
-            response = client.audio.transcriptions.create(model="whisper-1", file=f)
-
-        # Print the full response to see its structure
-        print("Transcription Response:", response)
+            response = client.audio.transcriptions.create(model="whisper-1", file=f, language="en")
 
         # Extract transcribed text from the response
-        transcribed_text = response.text  # Accessing text directly from response
+        transcribed_text = response.text.strip() # Accessing text directly from response
+
+        # Print the full response to see its structure
+        print("Transcription Response: {transcribed_text}")
 
         if transcribed_text:
+            if "conversation" not in session:
+                session["conversation"] = []
             # Add the transcribed text to the conversation
             session["conversation"].append({"role": "user", "content": transcribed_text})
-            session.modified = True
-
             # Generate the AI's response based on the updated conversation
             ai_response = get_script_response(transcribed_text, session["conversation"])
+            # Add the AI's response to the conversation
             session["conversation"].append({"role": "assistant", "content": ai_response})
             session.modified = True
 
-            # Fetch employee name and script type from session (ensure they're available)
-            employee_name = session.get("employee_name", "Unknown")
-            script_type = session.get("script_type", "custom")
-
             # Log the interaction to the database
-            log_interaction(employee_name, script_type, transcribed_text, ai_response)
+            employee_name = session.get("employee_name", "Unknown")
+            log_interaction(employee_name, "custom", transcribed_text, ai_response)
 
-            return jsonify({"conversation": session["conversation"], "listening": True})
-
+            return jsonify({
+                "conversation": [
+                    {"role": "user", "content": transcribed_text},
+                    {"role": "assistant", "content": ai_response}
+                ]
+            })
         else:
             return jsonify({"error": "Failed to transcribe audio."}), 500
 
