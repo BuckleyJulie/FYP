@@ -8,6 +8,8 @@ from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 import os
+import tempfile
+import whisper 
 from openai import OpenAI
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY")) # Import OpenAI API client
@@ -17,6 +19,8 @@ load_dotenv()
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 app.secret_key = "super secret key"
+
+whisper_model = whisper.load_model("base")
 
 init_db()  # Ensure database is initialized
 
@@ -86,19 +90,16 @@ def speech_to_text():
         return jsonify({"error": "No audio file provided"}), 400
 
     audio_file = request.files["audio"]
-    file_path = "temp_audio.webm"
-    audio_file.save(file_path)
     
+    with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as temp_file:
+        audio_file.save(temp_file.name)
+        temp_path = temp_file.name
     try:
-        # Open the saved file for transcription
-        with open(file_path, "rb") as f:
-            response = client.audio.transcriptions.create(model="whisper-1", file=f, language="en")
-
-        # Extract transcribed text from the response
-        transcribed_text = response.text.strip() # Accessing text directly from response
+        result = whisper_model.transcribe(temp_path)
+        transcribed_text = result["text"].strip()
 
         # Print the full response to see its structure
-        print("Transcription Response: {transcribed_text}")
+        print(f"Transcription Response: {transcribed_text}")
 
         if transcribed_text:
             if "conversation" not in session:
@@ -130,8 +131,8 @@ def speech_to_text():
 
     finally:
         # Ensure the file exists before attempting to delete it
-        if os.path.exists(file_path):
-            os.remove(file_path)  # Delete temp file after processing
+        if os.path.exists(temp_path):
+            os.remove(temp_path)  # Delete temp file after processing
 
 
 @app.route("/end_chat", methods=["POST"])

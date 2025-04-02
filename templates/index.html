@@ -162,7 +162,7 @@
                 audioChunks = [];
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 // Explicitly set MIME type for clarity and better compatibility
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm; codecs=opus' });
+                mediaRecorder = new MediaRecorder(stream);
 
                 mediaRecorder.ondataavailable = event => {
                     if (event.data.size > 0) {
@@ -185,15 +185,27 @@
             const formData = new FormData();
             formData.append('audio', audioBlob, 'audio.webm');
 
+            const chatBox = document.getElementById("chat-box");
+
+            // show temporary "Transcribing..." message
+            const transcribingDiv = document.createElement("div");
+            transcribingDiv.id = "transcribing-msg";
+            transcribingDiv.innerHTML = "<em> Transcribing audio...</em>";
+            chatBox.appendChild(transcribingDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
             fetch('/speech-to-text', {
                 method: 'POST',
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
-                // Directly append the transcribed text to the chat
-                const chatBox = document.getElementById("chat-box");
-                data.conversation.forEach(message => {
+                        // Remove the "Transcribing..." message
+                const tempMsg = document.getElementById("transcribing-msg");
+                if (tempMsg) tempMsg.remove();
+
+                if (data.conversation) {
+                    data.conversation.forEach(message => {
                     const MessageDiv = document.createElement("div");
 
                     if (message.role === 'user') {
@@ -207,9 +219,14 @@
                 });
 
                 chatBox.scrollTop = chatBox.scrollHeight;
-            })
-            .catch(error => console.error('Error uploading audio:', error));
-        }
+            }
+        })
+        .catch(error => {
+             console.error('Error uploading audio:', error);
+            const tempMsg = document.getElementById("transcribing-msg");
+            if (tempMsg) tempMsg.innerHTML  = "<em>⚠️ Failed to transcribe audio.</em>";
+        });
+    }
     </script>
 </body>
 </html>

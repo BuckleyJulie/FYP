@@ -13,7 +13,7 @@ def get_script_response(user_input, conversation):
     conversation.append({"role": "user", "content": user_input})
 
     try:
-        response = client.chat.completions.create(model="gpt-3.5-turbo",
+        response = client.chat.completions.create(model="gpt-4-turbo",
         messages=conversation)
 
         # Correctly access the assistant's response
