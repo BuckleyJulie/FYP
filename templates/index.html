@@ -69,6 +69,10 @@
         document.getElementById("start-form").addEventListener("submit", function(event) {
             event.preventDefault();  // Prevent the form from submitting the traditional way
             
+            const submitButton = this.querySelector("button[type='submit']");
+            submitButton.disabled = true; // disable button to prevent re-submission
+            submitButton.textContent = "Starting..."; // feedback for the user 
+            
             const formData = new FormData(this);
             const data = {
                 "employee_name": formData.get("employee_name"),
@@ -93,7 +97,11 @@
                     chatBox.innerHTML = "<p><strong>Chat Started!</strong></p>";  // Replace with actual chat UI
                 }
             })
-            .catch(error => console.error("Error:", error));
+            .catch(error => {
+                console.error("Error:", error);
+                submitButton.disabled = false;
+                submitButton.textContent = "Start Chat";
+            });
         });
 
         // Handle user input and send message to the server
