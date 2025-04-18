@@ -228,7 +228,7 @@ def generate_pdf_report(employee_name):
             training_recommendations.add("Be Aware of Business Strategies and Operations")
         # Detect willingness to click links or expect emails and attachments
         if any(term in user_resp.lower() for term in ["click the link", "email confirmation", "follow up email", "open the attachment", "download the file", "access the document", "view the content", "check the email", "follow the link", "visit the website", "access the portal"]):
-            disclosed_info.add("Suceptibility to Phishing Follow-Up")
+            disclosed_info.add("Susceptibility to Phishing Follow-Up")
             training_recommendations.add("Be Cautious of Follow-Up Emails Especially when Clicking Links or Opening Attachments from Unknown Sources")
 
     table = Table(table_data, colWidths=[1.2 * inch, 1.2 * inch, 2.8 * inch, 2.8 * inch])
