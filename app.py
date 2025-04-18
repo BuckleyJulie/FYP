@@ -191,15 +191,45 @@ def generate_pdf_report(employee_name):
         if "@" in user_resp:
             disclosed_info.add("Email Address")
             training_recommendations.add("Avoid Sharing Email Information with Unknown Sources")
-        if "password" in user_resp.lower():
-            disclosed_info.add("Password")
+        if any(q in user_resp.lower for q in ["password", "passcode", "pin"]):
+            disclosed_info.add("Password or Passcode or PIN")
             training_recommendations.add("Never Share Passwords Over the Phone")
-        if any(q in ai_resp.lower() for q in ["maiden name", "security question"]):
+        if any(q in ai_resp.lower() for q in ["maiden name", "first pet", "security question"]):
             disclosed_info.add("Security Answers")
             training_recommendations.add("Be Cautious When Answering Security Questions")
-        if user_resp.isdigit() and len(user_resp) == 6:
+        if user_resp.isdigit() and len(user_resp) in [4, 6, 7 ,8]:
             disclosed_info.add("Authentication Code")
             training_recommendations.add("Never Share Authentication Codes Over the Phone")
+
+        # Add more checks for other sensitive information as needed
+        # Potential credential exposure
+        if any (term in user_resp.lower() for term in ["username", "login", "user id", "credentials", "account details", "account number"]):
+            disclosed_info.add("Login Credentials - Credential Information")
+            training_recommendations.add("Do Not Share Login Credentials (usernames or login details) with Anyone")
+
+        # Detect Internal IT System Information
+        if any(term in user_resp.lower() for term in ["internal system", "company network", "intranet", "vpn", "internal application", "server", "database", "sharepoint", "citrix", "internal tool", "internal software", "endpoint", "internal access", "firewall", "internal resource", "shared drive", "internal communication"]):
+            disclosed_info.add("Internal IT Systems Information")
+            training_recommendations.add("Be Cautious When Discussing Internal IT Systems with Unknown Sources")
+
+        # Detecting Company-Specific Information
+        if any(term in user_resp.lower() for term in ["company policy", "company procedure", "company protocol", "company guidelines", "company standards", "company rules", "company practices"]):
+            disclosed_info.add("Company-Specific Information")
+            training_recommendations.add("Be Aware of Company Policies and Procedures")
+        
+        # Detecting Financial Information
+        if any(term in user_resp.lower() for term in ["financial information", "financial data", "financial records", "financial statements", "financial reports", "financial report", "financial transactions", "financial details", "financial analysis", "financial performance", "financial metrics", "financial forecasts", "financial planning", "financial strategy", "financial compliance", "audit", "revenue", "expenses", "profit", "loss", "budget", "revenue", "pricing"]):
+            disclosed_info.add("Financial Information")
+            training_recommendations.add("Be Cautious When Discussing Financial Information with Unknown Sources")
+
+        # Detect internal business-sensitive information
+        if any(term in user_resp.lower() for term in ["business strategy", "business plan", "business model", "business operations", "business processes", "business objectives", "client list", "business development", "business analysis", "business performance", "business metrics", "business forecasts", "business planning", "business strategy", "client information", "business compliance", "project details", "project plan", "project management", "project status", "project updates", "project deliverables", "project milestones", "project timelines", "project resources", "project budget", "project scope", "audit information", "business continuity", "business risk", "business impact", "business assessment", "business evaluation", "business review", "business audit", "business governance", "business oversight", "client", "customer", "vendor", "supplier", "partner", "stakeholder"]):
+            disclosed_info.add("Business-Sensitive Information")
+            training_recommendations.add("Be Aware of Business Strategies and Operations")
+        # Detect willingness to click links or expect emails and attachments
+        if any(term in user_resp.lower() for term in ["click the link", "email confirmation", "follow up email", "open the attachment", "download the file", "access the document", "view the content", "check the email", "follow the link", "visit the website", "access the portal"]):
+            disclosed_info.add("Suceptibility to Phishing Follow-Up")
+            training_recommendations.add("Be Cautious of Follow-Up Emails Especially when Clicking Links or Opening Attachments from Unknown Sources")
 
     table = Table(table_data, colWidths=[1.2 * inch, 1.2 * inch, 2.8 * inch, 2.8 * inch])
     table.setStyle(TableStyle([
